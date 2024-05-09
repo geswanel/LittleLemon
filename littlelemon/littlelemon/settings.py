@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'LittleLemonAPI',
+    'djoser',
 ]
 
 MIDDLEWARE = [
@@ -130,4 +131,8 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.TokenAuthentication"
     ]
+}
+
+DJOSER = {
+    "USER_ID_FIELD": "username",
 }

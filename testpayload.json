@@ -1,4 +1,17 @@
 {
     "username": "Customer1",
-    "password": "testuser321"
+    "password": "testUser321"
+}
+{
+    "username": "Manager1",
+    "password": "testUser321"
+}
+{
+    "username": "Delivery1",
+    "password": "testUser321"
+}
+{
+    "username": "NewUser1",
+    "password": "testUser321",
+    "email": "NewUser@email.com"
 }
