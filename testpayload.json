@@ -1,0 +1,20 @@
+{
+    "username": "Customer1",
+    "password": "testUser321"
+}
+{
+    "username": "Manager1",
+    "password": "testUser321"
+}
+{
+    "username": "Delivery1",
+    "password": "testUser321"
+}
+{
+    "username": "NewUser1",
+    "password": "testUser321",
+    "email": "NewUser@email.com"
+}
+{
+    "pk": 8
+}
