@@ -10,10 +10,12 @@ from rest_framework.views import APIView
 
 
 from .models import (
-    MenuItem
+    MenuItem,
+    CartItem
 )
 from .serializers import (
     MenuItemSerializer,
+    CartItemSerializer
 )
 
 
@@ -138,3 +140,26 @@ class SingleMenuItem(APIView):
         menu_item = get_object_or_404(MenuItem, pk=pk)
         menu_item.delete()
         return Response({"detail": "Success deletion"}, status=status.HTTP_200_OK)
+
+
+class CartView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        cart_items = CartItem.objects.filter(customer=request.user)
+
+        serialized_items = CartItemSerializer(cart_items, many=True)
+        return Response(serialized_items.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        request.data["customer"] = request.user.pk
+        serialized_data = CartItemSerializer(data=request.data)
+        serialized_data.is_valid(raise_exception=True)
+        serialized_data.save()
+
+        return Response({"detail": "New item added"}, status=status.HTTP_201_CREATED)
+
+    def delete(self, request):
+        cart_items = CartItem.objects.filter(customer=request.user)
+        cart_items.delete()
+
+        return Response({"detail": "Success cart flush"}, status=status.HTTP_200_OK)
