@@ -15,5 +15,6 @@ urlpatterns = [
     path("menu-items/<int:pk>", views.SingleMenuItem.as_view(), name="single_menu_item"),
     path("cart/menu-items", views.CartView.as_view(), name="cart"),
     path("orders", views.OrderView.as_view(), name="order"),
+    path("orders/<int:pk>", views.SingleOrderView.as_view(), name="single-order"),
     # path('', include('djoser.urls.authtoken')),
 ]

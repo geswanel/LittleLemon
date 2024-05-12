@@ -19,6 +19,7 @@ from .serializers import (
     MenuItemSerializer,
     CartItemSerializer,
     OrderSerializer,
+    OrderItemSerializer,
 )
 
 
@@ -192,3 +193,33 @@ class OrderView(APIView):
         cart_items.delete()
 
         return Response({"detail": "Order created"}, status=status.HTTP_201_CREATED)
+
+
+class SingleOrderView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        if order.customer != request.user:
+            return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        order_items = OrderItem.objects.filter(order=order)
+        ser_order_items = OrderItemSerializer(order_items, many=True)
+        return Response(ser_order_items.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        if request.user.groups.filter(name="Manager").exists():
+            order = get_object_or_404(Order, pk=pk)
+            ser_order = OrderSerializer(order, data=request.data, partial=True)
+            ser_order.is_valid(raise_exception=True)
+            ser_order.save()
+
+            return Response(ser_order.data, status=status.HTTP_200_OK)
+    
+    def patch(self, request, pk):
+        if request.user.groups.all().exists():
+            order = get_object_or_404(Order, pk=pk)
+            ser_order = OrderSerializer(order, data=request.data, partial=True)
+            ser_order.is_valid(raise_exception=True)
+            ser_order.save()
+
+            return Response(ser_order.data, status=status.HTTP_200_OK)
