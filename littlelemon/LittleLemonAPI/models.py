@@ -26,7 +26,7 @@ class Order(models.Model):
         DELIVERED = 1
 
     customer = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name="orders")
-    delivery_crew = models.ForeignKey(User, default=None,
+    delivery_crew = models.ForeignKey(User, default=None, null=True,
                                       on_delete=models.DO_NOTHING,
                                       related_name="to_deliver")
     status = models.IntegerField(default=Status.PROCESSING, choices=Status)

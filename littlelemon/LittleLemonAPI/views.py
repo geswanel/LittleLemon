@@ -11,11 +11,15 @@ from rest_framework.views import APIView
 
 from .models import (
     MenuItem,
-    CartItem
+    CartItem,
+    Order,
+    OrderItem,
 )
 from .serializers import (
     MenuItemSerializer,
-    CartItemSerializer
+    CartItemSerializer,
+    OrderSerializer,
+    OrderItemSerializer,
 )
 
 
@@ -163,3 +167,59 @@ class CartView(APIView):
         cart_items.delete()
 
         return Response({"detail": "Success cart flush"}, status=status.HTTP_200_OK)
+
+
+class OrderView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        if request.user.groups.filter(name="Managers").exists():
+            orders = Order.objects.all()
+        elif request.user.groups.filter(name="Managers").exists():
+            orders = Order.objects.filter(delivery_crew=request.user)
+        else:
+            orders = Order.objects.filter(customer=request.user)
+        
+        serialized_orders = OrderSerializer(orders, many=True)
+        return Response(serialized_orders.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        order = Order(customer=request.user)
+        order.save()
+        cart_items = CartItem.objects.filter(customer=request.user)
+        for item in cart_items:
+            order_item = OrderItem(menu_item=item.menu_item, order=order, quantity=item.quantity)
+            order_item.save()
+        
+        cart_items.delete()
+
+        return Response({"detail": "Order created"}, status=status.HTTP_201_CREATED)
+
+
+class SingleOrderView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        if order.customer != request.user:
+            return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        order_items = OrderItem.objects.filter(order=order)
+        ser_order_items = OrderItemSerializer(order_items, many=True)
+        return Response(ser_order_items.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        if request.user.groups.filter(name="Manager").exists():
+            order = get_object_or_404(Order, pk=pk)
+            ser_order = OrderSerializer(order, data=request.data, partial=True)
+            ser_order.is_valid(raise_exception=True)
+            ser_order.save()
+
+            return Response(ser_order.data, status=status.HTTP_200_OK)
+    
+    def patch(self, request, pk):
+        if request.user.groups.all().exists():
+            order = get_object_or_404(Order, pk=pk)
+            ser_order = OrderSerializer(order, data=request.data, partial=True)
+            ser_order.is_valid(raise_exception=True)
+            ser_order.save()
+
+            return Response(ser_order.data, status=status.HTTP_200_OK)
