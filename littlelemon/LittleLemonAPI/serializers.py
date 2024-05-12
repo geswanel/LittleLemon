@@ -1,12 +1,17 @@
 from rest_framework import serializers
+from djoser.serializers import UserSerializer
 
-from .models import (
-    MenuItem
-)
+from . import models
 
 
 class MenuItemSerializer(serializers.ModelSerializer):
     class Meta:
-        model = MenuItem
+        model = models.MenuItem
         fields = "__all__"
         #depth = 1
+
+
+class CartItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CartItem
+        fields = "__all__"
