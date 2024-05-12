@@ -18,3 +18,11 @@
 {
     "pk": 8
 }
+
+{
+    "title": "NewDish",
+    "description": "NewDish description",
+    "price": "10.99",
+    "inventory": 10,
+    "category": 1
+}

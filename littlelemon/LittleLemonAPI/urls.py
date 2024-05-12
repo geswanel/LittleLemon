@@ -11,5 +11,7 @@ urlpatterns = [
     path("groups/manager/users/<int:pk>", views.delete_manager, name="delete_manager"),
     path("groups/delivery-crew/users", views.delivery_crew, name="delivery_crew"),
     path("groups/delivery-crew/users/<int:pk>", views.delete_delivery_crew, name="delete_delivery_crew"),
+    path("menu-items", views.MenuItemsView.as_view(), name="menu_items"),
+    path("menu-items/<int:pk>", views.SingleMenuItem.as_view(), name="single_menu_item"),
     # path('', include('djoser.urls.authtoken')),
 ]

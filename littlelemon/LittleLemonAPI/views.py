@@ -6,6 +6,16 @@ from rest_framework import status
 from django.contrib.auth.models import Group, User
 from djoser.serializers import UserSerializer
 from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
+
+
+from .models import (
+    MenuItem
+)
+from .serializers import (
+    MenuItemSerializer,
+)
+
 
 # Create your views here.
 @api_view()
@@ -13,7 +23,7 @@ from django.shortcuts import get_object_or_404
 def secure_view(request):
     return Response({"message": "success"}, status=status.HTTP_200_OK)
 
-
+# User Management
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def managers(request):
@@ -75,3 +85,56 @@ def delete_delivery_crew(request, pk):
     decrew_to_delete = get_object_or_404(User, pk=pk)
     Group.objects.get(name="Delivery crew").user_set.remove(decrew_to_delete)
     return Response({"detail": "Success"}, status=status.HTTP_200_OK)
+
+# Menu Items
+class MenuItemsView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        items = MenuItem.objects.all()
+        serialized_items = MenuItemSerializer(items, many=True)
+        return Response(serialized_items.data, status=status.HTTP_200_OK)
+    
+    def post(self, request):
+        if not request.user.groups.filter(name="Managers").exists():
+            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+        
+        serialized_item = MenuItemSerializer(data=request.data)
+        serialized_item.is_valid(raise_exception=True)
+        serialized_item.save()
+        return Response({"detail": "Created"}, status=status.HTTP_201_CREATED)
+
+
+class SingleMenuItem(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, pk):
+        menu_item = get_object_or_404(MenuItem, pk=pk)
+        serialized_item = MenuItemSerializer(menu_item)
+        return Response(serialized_item.data, status=status.HTTP_200_OK)
+    
+    def put(self, request, pk):
+        if not request.user.groups.filter(name="Managers").exists():
+            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+        
+        item = get_object_or_404(MenuItem, pk=pk)
+        serialized_data = MenuItemSerializer(item, data=request.data)
+        serialized_data.is_valid(raise_exception=True)
+        serialized_data.save()
+        return Response({"detail": "Menu item is changed"}, status=status.HTTP_200_OK)
+    
+    def patch(self, request, pk):
+        if not request.user.groups.filter(name="Managers").exists():
+            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+        
+        item = get_object_or_404(MenuItem, pk=pk)
+        serialized_data = MenuItemSerializer(item, data=request.data, partial=True)
+        serialized_data.is_valid(raise_exception=True)
+        serialized_data.save()
+        return Response({"detail": "Menu item is changed"}, status=status.HTTP_200_OK)
+    
+    def delete(self, request, pk):
+        if not request.user.groups.filter(name="Managers").exists():
+            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+        
+        menu_item = get_object_or_404(MenuItem, pk=pk)
+        menu_item.delete()
+        return Response({"detail": "Success deletion"}, status=status.HTTP_200_OK)
