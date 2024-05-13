@@ -44,15 +44,15 @@ Customers are users with no group assigned.
 Djoser is allowed!
 - `/api/users`
     - POST
-        - creates new user with `name`, `email` and `password`
+        - creates new user with `name`, `email` and `password` 201
         - 400 - Bad request if some field not valid
 - `/api/users/me`
     - GET
-        - displays current user **if token is valid**
+        - displays current user **if token is valid** 200
         - 401 unauthorized **otherwise**
 - `/token/login`
     - POST 
-        - generates token for valid username and password in payload.
+        - generates token for valid username and password in payload. 201
         - 401 unauthorized **otherwise**
 
 #### Menu-items endpoints
@@ -64,8 +64,8 @@ Djoser is allowed!
         - Invalid token - 401
         - **Customer, Delivery crew** - 403
         - **Manager**
-            - create new menu item - 201
             - invalid payload - 400
+            - create new menu item - 201
     - PUT, PATCH, DELETE
         - not implemented 501(**Issue: Description said 403 for not manageres**)
 - `/api/menu-items/{menuItemId}`
@@ -123,7 +123,7 @@ Delivery crew and customers not stated in endpoint description for the project =
         - POST
             - Invalid payload 400
             - User Not Found 404
-            - Assign the user in the payload to the delivery crew group - 401
+            - Assign the user in the payload to the delivery crew group - 201
 - `/api/groups/delivery-crew/users/{userId}`
     - Invalid Token - 401
     - **Customer, Delivery crew** - 403
@@ -143,7 +143,7 @@ Managers and delivery crew not stated - 403 considered by me (**Restrict staff t
         - POST
             - invalid payload - 400
             - No menu item found - 400
-            - Add new item to the cart - 200
+            - Add new item to the cart - 201
         - DELETE
             - deletes all items - 200
 
@@ -161,9 +161,8 @@ Managers and delivery crew not stated - 403 considered by me (**Restrict staff t
         - Invalid Token - 401
         - **Customer**
             - if cart is empty - 400
-            - **creates new order for current user, deletes cart for user!** - 201
-        - **Managers, Delivery Crew not stated in description**
-            - Forbidden 403
+            - **creates new order for current user with items from cart, deletes cart for user!** - 201
+        - **Managers, Delivery Crew not stated in description** - Forbidden 403
 - `/api/orders/{orderId}`
     - GET
         - Invalid Token - 401
@@ -196,10 +195,13 @@ Managers and delivery crew not stated - 403 considered by me (**Restrict staff t
             - Delete order
 
 ### Additional functionality
+Proper filtering, pagination, sorting capabilities for menu-items and orders endpoints
+
 Filtering:
 - Orders by status
-- Items by categories and price ranges
+- menu-items by categories and price ranges
 Searching
-- Menu-items
+- Orders by customer
+- Menu-items by title, category__title
 Throttling
 - 5 calls per min
