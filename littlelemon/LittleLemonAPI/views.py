@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 
 from .models import (
     MenuItem,
-    CartItem,
+    Cart,
     Order,
     OrderItem,
 )
@@ -149,7 +149,7 @@ class SingleMenuItem(APIView):
 class CartView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
-        cart_items = CartItem.objects.filter(customer=request.user)
+        cart_items = Cart.objects.filter(customer=request.user)
 
         serialized_items = CartItemSerializer(cart_items, many=True)
         return Response(serialized_items.data, status=status.HTTP_200_OK)
@@ -163,7 +163,7 @@ class CartView(APIView):
         return Response({"detail": "New item added"}, status=status.HTTP_201_CREATED)
 
     def delete(self, request):
-        cart_items = CartItem.objects.filter(customer=request.user)
+        cart_items = Cart.objects.filter(customer=request.user)
         cart_items.delete()
 
         return Response({"detail": "Success cart flush"}, status=status.HTTP_200_OK)
@@ -185,7 +185,7 @@ class OrderView(APIView):
     def post(self, request):
         order = Order(customer=request.user)
         order.save()
-        cart_items = CartItem.objects.filter(customer=request.user)
+        cart_items = Cart.objects.filter(customer=request.user)
         for item in cart_items:
             order_item = OrderItem(menu_item=item.menu_item, order=order, quantity=item.quantity)
             order_item.save()

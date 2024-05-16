@@ -13,7 +13,7 @@ class MenuItemSerializer(serializers.ModelSerializer):
 
 class CartItemSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.CartItem
+        model = models.Cart
         fields = "__all__"
 
 
