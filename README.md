@@ -67,14 +67,14 @@ Djoser is allowed!
             - invalid payload - 400
             - create new menu item - 201
     - PUT, PATCH, DELETE
-        - not implemented 501(**Issue: Description said 403 for not manageres**)
+        - not implemented 405(**Issue: Description said 403 for not manageres**)
 - `/api/menu-items/{menuItemId}`
     - GET
         - Invalid token - 401
         - Not Found - 404
         - **AnyRole:** List single menu items - 200
     - POST
-        - not implemented 501 (**Issue: Description said 403 for not manageres**)
+        - not implemented 405 (**Issue: Description said 403 for not manageres**)
     - PUT
         - Invalid token - 401
         - **Customer, Delivery Crew** - 403
@@ -87,7 +87,7 @@ Djoser is allowed!
         - **Customer, Delivery Crew** - 403
         - **Managers**
             - Not Found 404
-            - Invalid payload - 400
+            - Invalid payload - 400 ??? **(TODO READ - extra fields to the payload)**
             - Updates single menu item - 200
     - DELETE
         - Invalid token - 401

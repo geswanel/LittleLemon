@@ -99,19 +99,19 @@ class CategoryViewSet(ModelViewSet):
     
     def create(self, request, *args, **kwargs):
         if not request.user.groups.filter(name="Managers").exists():
-            return Response({"message": "403: Forbidden to create categories"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Forbidden to create categories."}, status=status.HTTP_403_FORBIDDEN)
 
         return super().create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
         if not request.user.groups.filter(name="Managers").exists():
-            return Response({"message": "403: Forbidden to update categories"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Forbidden to update categories."}, status=status.HTTP_403_FORBIDDEN)
 
         return super().update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         if not request.user.groups.filter(name="Managers").exists():
-            return Response({"message": "403: Forbidden to delete categories"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Forbidden to delete categories."}, status=status.HTTP_403_FORBIDDEN)
 
         return super().destroy(request, *args, **kwargs)
 
@@ -125,12 +125,12 @@ class MenuItemsView(APIView):
     
     def post(self, request):
         if not request.user.groups.filter(name="Managers").exists():
-            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Forbidden to create a menu item."}, status=status.HTTP_403_FORBIDDEN)
         
         serialized_item = MenuItemSerializer(data=request.data)
         serialized_item.is_valid(raise_exception=True)
         serialized_item.save()
-        return Response({"detail": "Created"}, status=status.HTTP_201_CREATED)
+        return Response({"detail": "New item created."}, status=status.HTTP_201_CREATED)
 
 
 class SingleMenuItem(APIView):
@@ -142,31 +142,31 @@ class SingleMenuItem(APIView):
     
     def put(self, request, pk):
         if not request.user.groups.filter(name="Managers").exists():
-            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Forbidden to update the menu item."}, status=status.HTTP_403_FORBIDDEN)
         
         item = get_object_or_404(MenuItem, pk=pk)
         serialized_data = MenuItemSerializer(item, data=request.data)
         serialized_data.is_valid(raise_exception=True)
         serialized_data.save()
-        return Response({"detail": "Menu item is changed"}, status=status.HTTP_200_OK)
+        return Response({"detail": "The menu item is changed."}, status=status.HTTP_200_OK)
     
     def patch(self, request, pk):
         if not request.user.groups.filter(name="Managers").exists():
-            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Forbidden to update the menu item."}, status=status.HTTP_403_FORBIDDEN)
         
         item = get_object_or_404(MenuItem, pk=pk)
         serialized_data = MenuItemSerializer(item, data=request.data, partial=True)
         serialized_data.is_valid(raise_exception=True)
         serialized_data.save()
-        return Response({"detail": "Menu item is changed"}, status=status.HTTP_200_OK)
+        return Response({"detail": "The menu item is changed."}, status=status.HTTP_200_OK)
     
     def delete(self, request, pk):
         if not request.user.groups.filter(name="Managers").exists():
-            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Forbidden to delete the menu item."}, status=status.HTTP_403_FORBIDDEN)
         
         menu_item = get_object_or_404(MenuItem, pk=pk)
         menu_item.delete()
-        return Response({"detail": "Success deletion"}, status=status.HTTP_200_OK)
+        return Response({"detail": "Success deletion of the menu item."}, status=status.HTTP_200_OK)
 
 
 class CartView(APIView):

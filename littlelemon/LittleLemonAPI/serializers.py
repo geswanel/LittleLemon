@@ -10,10 +10,11 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class MenuItemSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(read_only=True)
+    category_id = serializers.PrimaryKeyRelatedField(queryset=models.Category.objects.all(), source="category", write_only=True)
     class Meta:
         model = models.MenuItem
-        fields = "__all__"
-        #depth = 1
+        fields = ["id", "title", "price", "featured", "category", "category_id"]
 
 
 class CartSerializer(serializers.ModelSerializer):
