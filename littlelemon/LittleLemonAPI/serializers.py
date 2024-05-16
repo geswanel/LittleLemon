@@ -3,6 +3,11 @@ from djoser.serializers import UserSerializer
 
 from . import models
 
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Category
+        fields = "__all__"
+
 
 class MenuItemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,7 +16,7 @@ class MenuItemSerializer(serializers.ModelSerializer):
         #depth = 1
 
 
-class CartItemSerializer(serializers.ModelSerializer):
+class CartSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Cart
         fields = "__all__"

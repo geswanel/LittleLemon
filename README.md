@@ -45,7 +45,7 @@ Djoser is allowed!
 - `/api/users`
     - POST
         - creates new user with `name`, `email` and `password` 201
-        - 400 - Bad request if some field not valid
+        - 400 - Bad request if some field not valid. *Email is not required?* **TODO**
 - `/api/users/me`
     - GET
         - displays current user **if token is valid** 200
@@ -53,7 +53,7 @@ Djoser is allowed!
 - `/token/login`
     - POST 
         - generates token for valid username and password in payload. 201
-        - 401 unauthorized **otherwise**
+        - 400 badRequest **otherwise**
 
 #### Menu-items endpoints
 - `/api/menu-items`

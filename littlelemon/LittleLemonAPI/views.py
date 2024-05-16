@@ -7,28 +7,26 @@ from django.contrib.auth.models import Group, User
 from djoser.serializers import UserSerializer
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
 
 
 from .models import (
+    Category,
     MenuItem,
     Cart,
     Order,
     OrderItem,
 )
 from .serializers import (
+    CategorySerializer,
     MenuItemSerializer,
-    CartItemSerializer,
+    CartSerializer,
     OrderSerializer,
     OrderItemSerializer,
 )
 
 
 # Create your views here.
-@api_view()
-@permission_classes([IsAuthenticated])
-def secure_view(request):
-    return Response({"message": "success"}, status=status.HTTP_200_OK)
-
 # User Management
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
@@ -92,6 +90,31 @@ def delete_delivery_crew(request, pk):
     Group.objects.get(name="Delivery crew").user_set.remove(decrew_to_delete)
     return Response({"detail": "Success"}, status=status.HTTP_200_OK)
 
+
+# Category model viewset - not required for the project - as helper for me
+class CategoryViewSet(ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [IsAuthenticated]
+    
+    def create(self, request, *args, **kwargs):
+        if not request.user.groups.filter(name="Managers").exists():
+            return Response({"message": "403: Forbidden to create categories"}, status=status.HTTP_403_FORBIDDEN)
+
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        if not request.user.groups.filter(name="Managers").exists():
+            return Response({"message": "403: Forbidden to update categories"}, status=status.HTTP_403_FORBIDDEN)
+
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if not request.user.groups.filter(name="Managers").exists():
+            return Response({"message": "403: Forbidden to delete categories"}, status=status.HTTP_403_FORBIDDEN)
+
+        return super().destroy(request, *args, **kwargs)
+
 # Menu Items
 class MenuItemsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -151,12 +174,12 @@ class CartView(APIView):
     def get(self, request):
         cart_items = Cart.objects.filter(customer=request.user)
 
-        serialized_items = CartItemSerializer(cart_items, many=True)
+        serialized_items = CartSerializer(cart_items, many=True)
         return Response(serialized_items.data, status=status.HTTP_200_OK)
 
     def post(self, request):
         request.data["customer"] = request.user.pk
-        serialized_data = CartItemSerializer(data=request.data)
+        serialized_data = CartSerializer(data=request.data)
         serialized_data.is_valid(raise_exception=True)
         serialized_data.save()
 
