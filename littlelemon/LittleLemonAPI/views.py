@@ -32,7 +32,7 @@ from .serializers import (
 @permission_classes([IsAuthenticated])
 def managers(request):
     if not request.user.groups.filter(name="Managers").exists():
-        return Response({"detail": "Forbidden: not enough priviliges"}, status=status.HTTP_403_FORBIDDEN)
+        return Response({"detail": "Forbidden: not enough priviliges."}, status=status.HTTP_403_FORBIDDEN)
     
     managers_user_set = Group.objects.get(name="Managers").user_set
     
@@ -41,23 +41,23 @@ def managers(request):
 
         return Response(serialized_users.data, status=status.HTTP_200_OK)
     elif request.method == "POST":
-        if "pk" not in request.data:
-            return Response({"detail": "Bad Request: pk not presented"}, status=status.HTTP_400_BAD_REQUEST)
-        pk = request.data.get("pk")
+        if "id" not in request.data:
+            return Response({"detail": "Bad Request: id not presented."}, status=status.HTTP_400_BAD_REQUEST)
+        pk = request.data.get("id")
         user = get_object_or_404(User, pk=pk)
         managers_user_set.add(user)
-        return Response({"detail": "User assigned to managers"}, status=status.HTTP_201_CREATED)
+        return Response({"detail": "User assigned to managers."}, status=status.HTTP_201_CREATED)
 
 
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
 def delete_manager(request, pk):
     if not request.user.groups.filter(name="Managers").exists():
-        return Response({"detail": "Forbidden: not enough priviliges"}, status=status.HTTP_403_FORBIDDEN)
+        return Response({"detail": "Forbidden: not enough priviliges."}, status=status.HTTP_403_FORBIDDEN)
 
     manager_to_delete = get_object_or_404(User, pk=pk)
     Group.objects.get(name="Managers").user_set.remove(manager_to_delete)
-    return Response({"detail": "Success"}, status=status.HTTP_200_OK)
+    return Response({"detail": "Success manager deletion."}, status=status.HTTP_200_OK)
 
 
 @api_view(["GET", "POST"])
@@ -73,22 +73,22 @@ def delivery_crew(request):
 
         return Response(serialized_users.data, status=status.HTTP_200_OK)
     elif request.method == "POST":
-        if "pk" not in request.data:
-            return Response({"detail": "Bad Request: pk not presented"}, status=status.HTTP_400_BAD_REQUEST)
-        pk = request.data.get("pk")
+        if "id" not in request.data:
+            return Response({"detail": "Bad Request: id not presented."}, status=status.HTTP_400_BAD_REQUEST)
+        pk = request.data.get("id")
         user = get_object_or_404(User, pk=pk)
         delcrew_user_set.add(user)
-        return Response({"detail": "User assigned to delivery crew"}, status=status.HTTP_201_CREATED)
+        return Response({"detail": "User assigned to delivery crew."}, status=status.HTTP_201_CREATED)
 
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
 def delete_delivery_crew(request, pk):
     if not request.user.groups.filter(name="Managers").exists():
-        return Response({"detail": "Forbidden: not enough priviliges"}, status=status.HTTP_403_FORBIDDEN)
+        return Response({"detail": "Forbidden: not enough priviliges."}, status=status.HTTP_403_FORBIDDEN)
 
     decrew_to_delete = get_object_or_404(User, pk=pk)
     Group.objects.get(name="Delivery crew").user_set.remove(decrew_to_delete)
-    return Response({"detail": "Success"}, status=status.HTTP_200_OK)
+    return Response({"detail": "Success delivery crew member deletion."}, status=status.HTTP_200_OK)
 
 
 # Category model viewset - not required for the project - as helper for me
