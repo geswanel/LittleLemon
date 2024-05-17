@@ -8,6 +8,7 @@ from djoser.serializers import UserSerializer
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
+from datetime import date
 
 
 from .models import (
@@ -219,24 +220,41 @@ class OrderView(APIView):
     def get(self, request):
         if request.user.groups.filter(name="Managers").exists():
             orders = Order.objects.all()
-        elif request.user.groups.filter(name="Managers").exists():
+        elif request.user.groups.filter(name="Delivery crew").exists():
             orders = Order.objects.filter(delivery_crew=request.user)
         else:
-            orders = Order.objects.filter(customer=request.user)
+            orders = Order.objects.filter(user=request.user)
         
         serialized_orders = OrderSerializer(orders, many=True)
         return Response(serialized_orders.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        order = Order(customer=request.user)
-        order.save()
-        cart_items = Cart.objects.filter(customer=request.user)
-        for item in cart_items:
-            order_item = OrderItem(menu_item=item.menu_item, order=order, quantity=item.quantity)
-            order_item.save()
-        
-        cart_items.delete()
+        if request.user.groups.all().exists():
+            return Response({"detail": "Forbidden for the staff."}, status=status.HTTP_403_FORBIDDEN)
 
+        cart_items = Cart.objects.filter(user=request.user)
+        if cart_items.count() == 0:
+            return Response({"detail": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
+
+        order = Order(user=request.user, date=date.today())
+        order.total = 0
+        order_items = []
+        for ci in cart_items:
+            oi = OrderItem(
+                order=order,
+                menu_item=ci.menu_item,
+                quantity=ci.quantity,
+                unit_price=ci.unit_price,
+                price=ci.price,
+            )
+            order.total += oi.price
+            order_items.append(oi)
+        
+        order.save()
+        for oi in order_items:
+            oi.save()
+
+        cart_items.delete()
         return Response({"detail": "Order created"}, status=status.HTTP_201_CREATED)
 
 

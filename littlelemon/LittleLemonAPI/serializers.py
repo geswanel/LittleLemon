@@ -1,7 +1,12 @@
 from rest_framework import serializers
-from djoser.serializers import UserSerializer
+from django.contrib.auth.models import User
 
 from . import models
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "email"]
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,18 +52,15 @@ class CartSerializer(serializers.ModelSerializer):
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
+    menu_item = MenuItemSerializer()
     class Meta:
         model = models.OrderItem
-        fields = "__all__"
+        fields = ["menu_item", "quantity", "unit_price", "price"]
+
 
 class OrderSerializer(serializers.ModelSerializer):
-    order_items = serializers.SerializerMethodField(method_name="get_items", read_only=True)
+    order_items = OrderItemSerializer(source="orderitem_set", many=True)
+    user = UserSerializer()
     class Meta:
         model = models.Order
         fields = "__all__"
-    
-    def get_items(self, order):
-        order_items = models.OrderItem.objects.filter(order=order)
-        serialized_items = OrderItemSerializer(order_items, many=True)
-
-        return serialized_items.data
