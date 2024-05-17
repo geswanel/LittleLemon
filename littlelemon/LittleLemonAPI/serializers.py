@@ -18,9 +18,32 @@ class MenuItemSerializer(serializers.ModelSerializer):
 
 
 class CartSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    menu_item = MenuItemSerializer(read_only=True)
+    menu_item_id = serializers.PrimaryKeyRelatedField(queryset=models.MenuItem.objects.all(), source="menu_item", write_only=True)
+
     class Meta:
         model = models.Cart
-        fields = "__all__"
+        fields = ["user", "menu_item", "menu_item_id", "quantity", "unit_price", "price"]
+        extra_kwargs = {
+            "unit_price": { "read_only": True },
+            "price": { "read_only": True },
+        }
+
+    def create(self, validated_data):
+        menu_item = validated_data.get("menu_item")
+
+        validated_data["unit_price"] = menu_item.price
+        validated_data["price"] = validated_data.get("unit_price") * validated_data.get("quantity")
+
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        menu_item = instance.menu_item
+        
+        validated_data["unit_price"] = menu_item.price
+        validated_data["price"] = validated_data.get("unit_price") * validated_data.get("quantity")
+        return super().update(instance, validated_data)
 
 
 class OrderItemSerializer(serializers.ModelSerializer):

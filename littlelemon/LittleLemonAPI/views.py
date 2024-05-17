@@ -172,24 +172,46 @@ class SingleMenuItem(APIView):
 class CartView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
-        cart_items = Cart.objects.filter(customer=request.user)
-
+        if request.user.groups.all().exists():
+            return Response({"detail": "Forbidden for the staff."}, status=status.HTTP_403_FORBIDDEN)
+        
+        cart_items = Cart.objects.filter(user=request.user)
         serialized_items = CartSerializer(cart_items, many=True)
         return Response(serialized_items.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        request.data["customer"] = request.user.pk
-        serialized_data = CartSerializer(data=request.data)
+        if request.user.groups.all().exists():
+            return Response({"detail": "Forbidden for the staff."}, status=status.HTTP_403_FORBIDDEN)
+        
+        user = request.user
+        try:
+            menu_item = MenuItem.objects.get(pk=request.data.get("menu_item_id"))
+        except MenuItem.DoesNotExist:
+            return Response({
+                "menu_item_id": [
+                    f"Invalid pk \"{request.data.get('menu_item_id')}\" - object does not exist."
+                    ]
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            cart_item = Cart.objects.get(user=user, menu_item=menu_item)
+            serialized_data = CartSerializer(cart_item, data=request.data, context={"request": request})
+        except Cart.DoesNotExist:
+            serialized_data = CartSerializer(data=request.data, context={"request": request})
+
         serialized_data.is_valid(raise_exception=True)
         serialized_data.save()
-
-        return Response({"detail": "New item added"}, status=status.HTTP_201_CREATED)
+        return Response({"detail": "Cart item added."}, status=status.HTTP_201_CREATED)
 
     def delete(self, request):
-        cart_items = Cart.objects.filter(customer=request.user)
+        if request.user.groups.all().exists():
+            return Response({"detail": "Forbidden for the staff."}, status=status.HTTP_403_FORBIDDEN)
+        
+        cart_items = Cart.objects.filter(user=request.user)
         cart_items.delete()
-
-        return Response({"detail": "Success cart flush"}, status=status.HTTP_200_OK)
+        return Response({"detail": "Cart is successfully flushed."}, status=status.HTTP_200_OK)
 
 
 class OrderView(APIView):
