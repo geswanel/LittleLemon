@@ -1,0 +1,9 @@
+Superuser:
+admin 123456
+
+Users:
+Customer
+Manager
+Delivery
+
+All Passwords: testUser321
