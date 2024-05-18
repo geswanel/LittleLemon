@@ -198,12 +198,23 @@ Managers and delivery crew not stated - 403 considered by me (**Restrict staff t
 ### Additional functionality
 Proper filtering, pagination, sorting capabilities for menu-items and orders endpoints
 
-Filtering:
-- Orders by status
+Filtering Searching Ordering:
+- Orders
+    - Any role
+        - status=0 or status=1 - filtering by status
+        - ordering by date and total price -  ordering=date,total
+    - manager
+        - username={username}, user_id={id} - search by user namem and user id
+        - delivery={name or null} delivery_id={id} - search by delivery name and id
+        - year, month, day - filtering
 - menu-items by categories and price ranges
-Searching
-- Orders by customer
-- Menu-items by title, category__title
+    - format
+        - category={categoryName} - search by category
+        - search=query - searching by menu item title
+        - ordering=price or ordering=-price
+        - featured=0 or featured=1
+        - price_lte=100, price_gte=100
+        - perpage=2&page=2 - always should be together
 Throttling
 - 5 calls per min
 

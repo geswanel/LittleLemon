@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from datetime import date
 from django.db.models import Q
+from django.core.paginator import Paginator, EmptyPage
 
 
 from .models import (
@@ -129,8 +130,55 @@ class CategoryViewSet(ModelViewSet):
 # Menu Items
 class MenuItemsView(APIView):
     permission_classes = [IsAuthenticated]
+
+    #filter search ordering pagination
+    def filter_menu_items(self, request, items):
+        # title search
+        search = request.query_params.get("search")
+        if search:
+            items = items.filter(title__icontains=search)
+
+        # category search
+        category = request.query_params.get("category")
+        if category:
+            items = items.filter(category__slug__icontains=category)
+        
+        #featured
+        featured = request.query_params.get("featured")
+        if featured:
+            items = items.filter(featured=featured)
+
+        # price between
+        price_lte = request.query_params.get("price_lte")
+        if price_lte:
+            items = items.filter(price__lte=price_lte)
+        
+        price_gte = request.query_params.get("price_gte")
+        if price_gte:
+            items = items.filter(price__gte=price_gte)
+
+        # ordering
+        ordering = request.query_params.get("ordering")
+        if ordering:
+            ordering_fields = ordering.split(',')
+            items = items.order_by(*ordering_fields)
+        
+        # pagination
+        page = request.query_params.get("page")
+        perpage = request.query_params.get("perpage")
+        if page and perpage:
+            paginator = Paginator(items, perpage)
+            try:
+                items = paginator.page(page)
+            except EmptyPage:
+                items = []
+        
+        return items
+
     def get(self, request):
-        items = MenuItem.objects.all()
+        items = MenuItem.objects.select_related("category").all()
+        items = self.filter_menu_items(request, items)
+        
         serialized_items = MenuItemSerializer(items, many=True)
         return Response(serialized_items.data, status=status.HTTP_200_OK)
     
@@ -227,6 +275,52 @@ class CartView(APIView):
 
 class OrderView(APIView):
     permission_classes = [IsAuthenticated]
+
+    def filter_orders(self, request, orders):
+        status = request.query_params.get("status")
+        if status:
+            orders = orders.filter(status=status)
+        
+        if is_manager(request.user):
+            username = request.query_params.get("username")
+            if username:
+                orders = orders.filter(user__username__icontains=username)
+
+            user_id = request.query_params.get("user_id")
+            if user_id:
+                orders = orders.filter(user=user_id)
+            
+            delivery = request.query_params.get("delivery")
+            if delivery:
+                if delivery == "null":
+                    orders = orders.filter(delivery_crew__isnull=True)
+                else:
+                    orders = orders.filter(delivery_crew__username__icontains=delivery)
+
+            delivery_id = request.query_params.get("delivery_id")
+            if delivery_id:
+                orders = orders.filter(delivery_crew=delivery_id)
+            
+            year = request.query_params.get("year")
+            if year:
+                orders = orders.filter(date__year=year)
+
+            month = request.query_params.get("month")
+            if month:
+                orders = orders.filter(date__month=month)
+
+            day = request.query_params.get("day")
+            if day:
+                orders = orders.filter(date__day=day)
+        
+        ordering = request.query_params.get("ordering")
+        if ordering:
+            ordering_fields = ordering.split(",")
+            orders = orders.order_by(*ordering_fields)
+        
+        return orders
+
+
     def get(self, request):
         if is_manager(request.user):
             orders = Order.objects.all()
@@ -235,6 +329,7 @@ class OrderView(APIView):
         else:
             orders = Order.objects.filter(user=request.user)
         
+        orders = self.filter_orders(request, orders)
         serialized_orders = OrderSerializer(orders, many=True)
         return Response(serialized_orders.data, status=status.HTTP_200_OK)
 
