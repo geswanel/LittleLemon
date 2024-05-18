@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.models import Group, User
@@ -11,6 +11,7 @@ from rest_framework.viewsets import ModelViewSet
 from datetime import date
 from django.db.models import Q
 from django.core.paginator import Paginator, EmptyPage
+from rest_framework.throttling import UserRateThrottle
 
 
 from .models import (
@@ -42,6 +43,7 @@ def is_delivery(user):
 # User Management
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([UserRateThrottle])
 def managers(request):
     if not is_manager(request.user):
         return Response({"detail": "Forbidden: not enough priviliges."}, status=status.HTTP_403_FORBIDDEN)
@@ -63,6 +65,7 @@ def managers(request):
 
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([UserRateThrottle])
 def delete_manager(request, pk):
     if not is_manager(request.user):
         return Response({"detail": "Forbidden: not enough priviliges."}, status=status.HTTP_403_FORBIDDEN)
@@ -74,6 +77,7 @@ def delete_manager(request, pk):
 
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([UserRateThrottle])
 def delivery_crew(request):
     if not is_manager(request.user):
         return Response({"detail": "Forbidden: not enough priviliges"}, status=status.HTTP_403_FORBIDDEN)
@@ -94,6 +98,7 @@ def delivery_crew(request):
 
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([UserRateThrottle])
 def delete_delivery_crew(request, pk):
     if not is_manager(request.user):
         return Response({"detail": "Forbidden: not enough priviliges."}, status=status.HTTP_403_FORBIDDEN)
@@ -108,6 +113,7 @@ class CategoryViewSet(ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
     
     def create(self, request, *args, **kwargs):
         if not is_manager(request.user):
@@ -130,6 +136,7 @@ class CategoryViewSet(ModelViewSet):
 # Menu Items
 class MenuItemsView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
 
     #filter search ordering pagination
     def filter_menu_items(self, request, items):
@@ -194,6 +201,8 @@ class MenuItemsView(APIView):
 
 class SingleMenuItem(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
+
     def get(self, request, pk):
         menu_item = get_object_or_404(MenuItem, pk=pk)
         serialized_item = MenuItemSerializer(menu_item)
@@ -230,6 +239,8 @@ class SingleMenuItem(APIView):
 
 class CartView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
+
     def get(self, request):
         if is_staff(request.user):
             return Response({"detail": "Forbidden for the staff."}, status=status.HTTP_403_FORBIDDEN)
@@ -275,6 +286,7 @@ class CartView(APIView):
 
 class OrderView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
 
     def filter_orders(self, request, orders):
         status = request.query_params.get("status")
@@ -365,6 +377,8 @@ class OrderView(APIView):
 
 class SingleOrderView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
+
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
         if not (is_manager(request.user) or \
