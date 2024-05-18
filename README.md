@@ -170,12 +170,13 @@ Managers and delivery crew not stated - 403 considered by me (**Restrict staff t
             - Order not found 404
             - Order belongs to another user 403
             - Returns all items for order id 200
-        - **Managers, Delivery crew** not stated 403
+        - **Managers, Delivery crew** always show an order items 200 or 404
     - PUT
         - Invalid Token - 401
         - **Customer, Delivery Crew not stated** - 403
         - **Managers**
             - Order not found 404
+            - Invalid payload 400
             - Updates the order 200 (set delivery crew or change status)
     - PATCH
         - Invalid Token - 401
@@ -205,3 +206,78 @@ Searching
 - Menu-items by title, category__title
 Throttling
 - 5 calls per min
+
+### Examples of payloads
+#### Creating a new user `/api/users`
+```json
+{
+    "username": "UserName",
+    "password": "Password123!",
+    "email": "email@email.com"
+}
+```
+
+#### Getting token `/token/login/`
+```json
+{
+    "username": "UserName",
+    "password": "Password123!",
+}
+```
+
+#### Creating menu item `/api/menu-items`
+```json
+{
+    "title": "NewItem",
+    "price": "10.99",
+    "category_id": 1
+}
+```
+
+#### Updating menu item `/api/menu-items/{menuItemId}`
+PUT:
+```json
+{
+    "title": "NewItemPUT",
+    "price": "10.99",
+    "category_id": 1
+}
+```
+
+PATCH:
+```json
+{
+    "title": "NewItemPatched",
+}
+```
+
+#### Assigng users to manager `/api/groups/manager/users` or delivery crew `/api/groups/delivery-crew/users`
+```json
+{
+    "id": 3 //user id
+}
+```
+
+#### Cart item creation or update `/api/cart/menu-items`
+```json
+{
+    "menu_item_id": 1,
+    "quantity": 10,
+}
+```
+
+#### Order status and delivery crew update `/api/orders/{orderId}`
+PUT:
+```json
+{
+    "status": true,
+    "delivery_crew_id": 4
+}
+```
+
+PATCH:
+```json
+{
+    "status": true
+}
+```

@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from datetime import date
+from django.db.models import Q
 
 
 from .models import (
@@ -26,13 +27,22 @@ from .serializers import (
     OrderItemSerializer,
 )
 
+def is_staff(user):
+    return user.groups.filter(Q(name="Managers") | Q(name="Delivery crew")).exists()
+
+def is_manager(user):
+    return user.groups.filter(name="Managers").exists()
+
+def is_delivery(user):
+    return user.groups.filter(name="Delivery crew").exists()
+
 
 # Create your views here.
 # User Management
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def managers(request):
-    if not request.user.groups.filter(name="Managers").exists():
+    if not is_manager(request.user):
         return Response({"detail": "Forbidden: not enough priviliges."}, status=status.HTTP_403_FORBIDDEN)
     
     managers_user_set = Group.objects.get(name="Managers").user_set
@@ -53,7 +63,7 @@ def managers(request):
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
 def delete_manager(request, pk):
-    if not request.user.groups.filter(name="Managers").exists():
+    if not is_manager(request.user):
         return Response({"detail": "Forbidden: not enough priviliges."}, status=status.HTTP_403_FORBIDDEN)
 
     manager_to_delete = get_object_or_404(User, pk=pk)
@@ -64,7 +74,7 @@ def delete_manager(request, pk):
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def delivery_crew(request):
-    if not request.user.groups.filter(name="Managers").exists():
+    if not is_manager(request.user):
         return Response({"detail": "Forbidden: not enough priviliges"}, status=status.HTTP_403_FORBIDDEN)
     
     delcrew_user_set = Group.objects.get(name="Delivery crew").user_set
@@ -84,7 +94,7 @@ def delivery_crew(request):
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
 def delete_delivery_crew(request, pk):
-    if not request.user.groups.filter(name="Managers").exists():
+    if not is_manager(request.user):
         return Response({"detail": "Forbidden: not enough priviliges."}, status=status.HTTP_403_FORBIDDEN)
 
     decrew_to_delete = get_object_or_404(User, pk=pk)
@@ -99,19 +109,19 @@ class CategoryViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
     
     def create(self, request, *args, **kwargs):
-        if not request.user.groups.filter(name="Managers").exists():
+        if not is_manager(request.user):
             return Response({"detail": "Forbidden to create categories."}, status=status.HTTP_403_FORBIDDEN)
 
         return super().create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
-        if not request.user.groups.filter(name="Managers").exists():
+        if not is_manager(request.user):
             return Response({"detail": "Forbidden to update categories."}, status=status.HTTP_403_FORBIDDEN)
 
         return super().update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        if not request.user.groups.filter(name="Managers").exists():
+        if not is_manager(request.user):
             return Response({"detail": "Forbidden to delete categories."}, status=status.HTTP_403_FORBIDDEN)
 
         return super().destroy(request, *args, **kwargs)
@@ -125,7 +135,7 @@ class MenuItemsView(APIView):
         return Response(serialized_items.data, status=status.HTTP_200_OK)
     
     def post(self, request):
-        if not request.user.groups.filter(name="Managers").exists():
+        if not is_manager(request.user):
             return Response({"detail": "Forbidden to create a menu item."}, status=status.HTTP_403_FORBIDDEN)
         
         serialized_item = MenuItemSerializer(data=request.data)
@@ -142,7 +152,7 @@ class SingleMenuItem(APIView):
         return Response(serialized_item.data, status=status.HTTP_200_OK)
     
     def put(self, request, pk):
-        if not request.user.groups.filter(name="Managers").exists():
+        if not is_manager(request.user):
             return Response({"detail": "Forbidden to update the menu item."}, status=status.HTTP_403_FORBIDDEN)
         
         item = get_object_or_404(MenuItem, pk=pk)
@@ -152,7 +162,7 @@ class SingleMenuItem(APIView):
         return Response({"detail": "The menu item is changed."}, status=status.HTTP_200_OK)
     
     def patch(self, request, pk):
-        if not request.user.groups.filter(name="Managers").exists():
+        if not is_manager(request.user):
             return Response({"detail": "Forbidden to update the menu item."}, status=status.HTTP_403_FORBIDDEN)
         
         item = get_object_or_404(MenuItem, pk=pk)
@@ -162,7 +172,7 @@ class SingleMenuItem(APIView):
         return Response({"detail": "The menu item is changed."}, status=status.HTTP_200_OK)
     
     def delete(self, request, pk):
-        if not request.user.groups.filter(name="Managers").exists():
+        if not is_manager(request.user):
             return Response({"detail": "Forbidden to delete the menu item."}, status=status.HTTP_403_FORBIDDEN)
         
         menu_item = get_object_or_404(MenuItem, pk=pk)
@@ -173,7 +183,7 @@ class SingleMenuItem(APIView):
 class CartView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
-        if request.user.groups.all().exists():
+        if is_staff(request.user):
             return Response({"detail": "Forbidden for the staff."}, status=status.HTTP_403_FORBIDDEN)
         
         cart_items = Cart.objects.filter(user=request.user)
@@ -181,7 +191,7 @@ class CartView(APIView):
         return Response(serialized_items.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        if request.user.groups.all().exists():
+        if is_staff(request.user):
             return Response({"detail": "Forbidden for the staff."}, status=status.HTTP_403_FORBIDDEN)
         
         user = request.user
@@ -207,7 +217,7 @@ class CartView(APIView):
         return Response({"detail": "Cart item added."}, status=status.HTTP_201_CREATED)
 
     def delete(self, request):
-        if request.user.groups.all().exists():
+        if is_staff(request.user):
             return Response({"detail": "Forbidden for the staff."}, status=status.HTTP_403_FORBIDDEN)
         
         cart_items = Cart.objects.filter(user=request.user)
@@ -218,9 +228,9 @@ class CartView(APIView):
 class OrderView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
-        if request.user.groups.filter(name="Managers").exists():
+        if is_manager(request.user):
             orders = Order.objects.all()
-        elif request.user.groups.filter(name="Delivery crew").exists():
+        elif is_delivery(request.user):
             orders = Order.objects.filter(delivery_crew=request.user)
         else:
             orders = Order.objects.filter(user=request.user)
@@ -229,7 +239,7 @@ class OrderView(APIView):
         return Response(serialized_orders.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        if request.user.groups.all().exists():
+        if is_staff(request.user):
             return Response({"detail": "Forbidden for the staff."}, status=status.HTTP_403_FORBIDDEN)
 
         cart_items = Cart.objects.filter(user=request.user)
@@ -262,27 +272,43 @@ class SingleOrderView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
-        if order.customer != request.user:
-            return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        if not (is_manager(request.user) or \
+                is_delivery(request.user) and order.delivery_crew == request.user or \
+                    not is_staff(request.user) and order.user == request.user):
+            return Response({"detail": "The order is assigned to other user."}, status=status.HTTP_403_FORBIDDEN)
         
-        order_items = OrderItem.objects.filter(order=order)
-        ser_order_items = OrderItemSerializer(order_items, many=True)
-        return Response(ser_order_items.data, status=status.HTTP_200_OK)
+        serialized_order = OrderSerializer(order)
+        return Response(serialized_order.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):
-        if request.user.groups.filter(name="Manager").exists():
-            order = get_object_or_404(Order, pk=pk)
-            ser_order = OrderSerializer(order, data=request.data, partial=True)
-            ser_order.is_valid(raise_exception=True)
-            ser_order.save()
+        if not is_manager(request.user):
+            return Response({"detail": "Not enough priviliges"}, status=status.HTTP_403_FORBIDDEN)
+        
+        order = get_object_or_404(Order, pk=pk)
+        ser_order = OrderSerializer(order, data=request.data)
+        ser_order.is_valid(raise_exception=True)
+        ser_order.save()
 
-            return Response(ser_order.data, status=status.HTTP_200_OK)
+        return Response(ser_order.data, status=status.HTTP_200_OK)
     
     def patch(self, request, pk):
-        if request.user.groups.all().exists():
-            order = get_object_or_404(Order, pk=pk)
-            ser_order = OrderSerializer(order, data=request.data, partial=True)
-            ser_order.is_valid(raise_exception=True)
-            ser_order.save()
+        if not is_staff(request.user):
+            return Response({"detail": "Not enough priviliges"}, status=status.HTTP_403_FORBIDDEN)
 
-            return Response(ser_order.data, status=status.HTTP_200_OK)
+        order = get_object_or_404(Order, pk=pk)
+        if is_delivery(request.user) and "delivery_crew_id" in request.data:
+            return Response({"detail": "Not enough priviliges - cannot assign delivery crew for the order"}, status=status.HTTP_403_FORBIDDEN)
+
+        ser_order = OrderSerializer(order, data=request.data, partial=True)
+        ser_order.is_valid(raise_exception=True)
+        ser_order.save()
+
+        return Response(ser_order.data, status=status.HTTP_200_OK)
+
+    def delete(serf, request, pk):
+        if not is_manager(request.user):
+            return Response({"detail": "Not enough priviliges"}, status=status.HTTP_403_FORBIDDEN)
+
+        order = get_object_or_404(Order, pk=pk)
+        order.delete()
+        return Response({"detail": "Order is deleted successfuly"}, status=status.HTTP_200_OK)
